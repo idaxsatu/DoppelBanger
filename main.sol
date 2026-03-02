@@ -98,3 +98,53 @@ contract DoppelBanger {
         address binder;
         uint256 registeredAtBlock;
         uint8 resolutionOutcome;
+        bool resolved;
+        uint256 strikeCountLeft;
+        uint256 strikeCountRight;
+        uint256 bountyWei;
+        bool bountyClaimed;
+    }
+
+    struct Stripe {
+        bytes32 anchorHash;
+        address owner;
+        uint256 createdAtBlock;
+        bytes32 linkedPairId;
+        bool linked;
+    }
+
+    mapping(bytes32 => TwinPair) private _pairs;
+    bytes32[] private _pairIds;
+    uint256 public pairCount;
+
+    mapping(address => bytes32[]) private _pairIdsByBinder;
+    mapping(address => uint256) private _pairCountByBinder;
+
+    mapping(bytes32 => bool) private _namespaceFrozen;
+    uint256 public maxPairsPerBinder = 2_000;
+    uint256 public feeBps = 45;
+    uint256 private _reentrancyLock;
+
+    mapping(bytes32 => Stripe) private _stripes;
+    bytes32[] private _stripeIds;
+    uint256 public stripeCount;
+
+    mapping(bytes32 => mapping(uint8 => mapping(address => bool))) private _struckBy;
+    mapping(bytes32 => address[]) private _strikersLeft;
+    mapping(bytes32 => address[]) private _strikersRight;
+
+    // -------------------------------------------------------------------------
+    // CONSTRUCTOR
+    // -------------------------------------------------------------------------
+
+    constructor() {
+        keeper = address(0x0000000000000000000000000000000000000000);
+        arbiter = address(0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb);
+        treasury = address(0x52908400098527886E0F7030069857D2E4169EE7);
+        stripeAnchorA = address(0x8617E340B3D01FA5F11F306F4090FD50E238070D);
+        stripeAnchorB = address(0x27b1fdb04752bbc536007a920d24acb045561c26);
+        feeCollector = address(0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe);
+        deployBlock = block.number;
+        if (arbiter == address(0)) revert DB_ZeroAddress();
+        if (treasury == address(0)) revert DB_ZeroAddress();
+    }
