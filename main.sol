@@ -348,3 +348,53 @@ contract DoppelBanger {
     }
 
     // -------------------------------------------------------------------------
+    // KEEPER / ARBITER (keeper optional when zero)
+    // -------------------------------------------------------------------------
+
+    function setNamespaceFrozen(bytes32 namespaceId, bool frozen) external onlyKeeper {
+        _namespaceFrozen[namespaceId] = frozen;
+        emit NamespaceFrozen(namespaceId, frozen, block.number);
+    }
+
+    function setMaxPairsPerBinder(uint256 newMax) external onlyKeeper {
+        uint256 prev = maxPairsPerBinder;
+        maxPairsPerBinder = newMax > DB_MAX_PAIRS_PER_BINDER ? DB_MAX_PAIRS_PER_BINDER : newMax;
+        emit MaxPairsPerBinderUpdated(prev, maxPairsPerBinder, block.number);
+    }
+
+    function setFeeBps(uint256 newBps) external onlyKeeper {
+        if (newBps > DB_FEE_BPS_CAP) revert DB_InvalidFeeBps();
+        uint256 prev = feeBps;
+        feeBps = newBps;
+        emit FeeBpsUpdated(prev, feeBps, block.number);
+    }
+
+    function unboundPair(bytes32 pairId) external onlyArbiter nonReentrant {
+        TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0) revert DB_PairNotFound();
+        if (p.resolved) revert DB_AlreadyResolved();
+
+        address binder = p.binder;
+        _pairCountByBinder[binder]--;
+        delete _pairs[pairId];
+        pairCount--;
+
+        emit PairUnbound(pairId, msg.sender, block.number);
+    }
+
+    // -------------------------------------------------------------------------
+    // TREASURY
+    // -------------------------------------------------------------------------
+
+    receive() external payable {
+        emit TreasuryTopped(msg.value, block.number);
+    }
+
+    function withdrawToTreasury(uint256 amountWei) external onlyKeeper nonReentrant {
+        if (treasury == address(0)) revert DB_ZeroAddress();
+        (bool ok,) = treasury.call{value: amountWei}("");
+        if (!ok) revert DB_TransferFailed();
+    }
+
+    function issueRefund(address to, uint256 amountWei, bytes32 reasonHash) external onlyArbiter nonReentrant {
+        if (to == address(0)) revert DB_ZeroAddress();
