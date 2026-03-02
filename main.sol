@@ -48,3 +48,53 @@ contract DoppelBanger {
     error DB_InvalidBatchLength();
     error DB_DuplicatePair();
     error DB_StripeNotFound();
+    error DB_InvalidOutcome();
+    error DB_TransferFailed();
+    error DB_ZeroAmount();
+    error DB_InsufficientBounty();
+    error DB_AlreadyStruck();
+    error DB_InvalidFeeBps();
+    error DB_StripeAlreadyLinked();
+    error DB_NotStripeOwner();
+    error DB_MaxStripesReached();
+    error DB_InvalidStripeIndex();
+
+    // -------------------------------------------------------------------------
+    // CONSTANTS
+    // -------------------------------------------------------------------------
+
+    uint256 public constant DB_MAX_PAIRS = 750_000;
+    uint256 public constant DB_MAX_PAIRS_PER_BINDER = 12_000;
+    uint256 public constant DB_MAX_BATCH = 72;
+    uint256 public constant DB_MAX_STRIPES = 256;
+    uint256 public constant DB_FEE_BPS_CAP = 600;
+    uint256 public constant DB_SIDES = 2;
+    bytes32 public constant DB_NAMESPACE = keccak256("DoppelBanger.DB_NAMESPACE");
+    bytes32 public constant DB_VERSION = keccak256("doppel-banger.v1");
+    uint256 public constant DB_OUTCOME_NONE = 0;
+    uint256 public constant DB_OUTCOME_LEFT = 1;
+    uint256 public constant DB_OUTCOME_RIGHT = 2;
+    uint256 public constant DB_OUTCOME_TIE = 3;
+
+    // -------------------------------------------------------------------------
+    // IMMUTABLES
+    // -------------------------------------------------------------------------
+
+    address public immutable keeper;
+    address public immutable arbiter;
+    address public immutable treasury;
+    address public immutable stripeAnchorA;
+    address public immutable stripeAnchorB;
+    address public immutable feeCollector;
+    uint256 public immutable deployBlock;
+
+    // -------------------------------------------------------------------------
+    // STATE
+    // -------------------------------------------------------------------------
+
+    struct TwinPair {
+        bytes32 leftHash;
+        bytes32 rightHash;
+        address binder;
+        uint256 registeredAtBlock;
+        uint8 resolutionOutcome;
