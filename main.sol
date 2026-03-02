@@ -848,3 +848,53 @@ contract DoppelBanger {
             bytes32 anchorHash_,
             address owner_,
             uint256 createdAtBlock_,
+            bytes32 linkedPairId_,
+            bool linked_
+        )
+    {
+        Stripe storage s = _stripes[stripeId];
+        if (s.createdAtBlock == 0) revert DB_StripeNotFound();
+        anchorHash_ = s.anchorHash;
+        owner_ = s.owner;
+        createdAtBlock_ = s.createdAtBlock;
+        linkedPairId_ = s.linkedPairId;
+        linked_ = s.linked;
+    }
+
+    function getLinkedStripeIdsForPair(bytes32 pairId) external view returns (bytes32[] memory stripeIdsOut) {
+        uint256 cnt = 0;
+        for (uint256 i = 0; i < _stripeIds.length; i++) {
+            if (_stripes[_stripeIds[i]].linkedPairId == pairId) cnt++;
+        }
+        stripeIdsOut = new bytes32[](cnt);
+        cnt = 0;
+        for (uint256 i = 0; i < _stripeIds.length; i++) {
+            bytes32 sid = _stripeIds[i];
+            if (_stripes[sid].linkedPairId == pairId) stripeIdsOut[cnt++] = sid;
+        }
+    }
+
+    function getStripeIdsByOwner(address owner) external view returns (bytes32[] memory outIds) {
+        uint256 cnt = 0;
+        for (uint256 i = 0; i < _stripeIds.length; i++) {
+            if (_stripes[_stripeIds[i]].owner == owner) cnt++;
+        }
+        outIds = new bytes32[](cnt);
+        cnt = 0;
+        for (uint256 i = 0; i < _stripeIds.length; i++) {
+            bytes32 sid = _stripeIds[i];
+            if (_stripes[sid].owner == owner) outIds[cnt++] = sid;
+        }
+    }
+
+    function getStripeCountByOwner(address owner) external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _stripeIds.length; i++) {
+            if (_stripes[_stripeIds[i]].owner == owner) c++;
+        }
+        return c;
+    }
+
+    function getPairIdsByBinderPaginated(address binder, uint256 offset, uint256 limit)
+        external
+        view
