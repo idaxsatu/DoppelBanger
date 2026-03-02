@@ -798,3 +798,53 @@ contract DoppelBanger {
     }
 
     function countPairsWithBounty() external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _pairIds.length; i++) {
+            if (_pairs[_pairIds[i]].bountyWei > 0) c++;
+        }
+        return c;
+    }
+
+    function totalBountyWeiAcrossAllPairs() external view returns (uint256 total) {
+        for (uint256 i = 0; i < _pairIds.length; i++) {
+            total += _pairs[_pairIds[i]].bountyWei;
+        }
+    }
+
+    function getPairDetails(bytes32 pairId)
+        external
+        view
+        returns (
+            bytes32 leftHash_,
+            bytes32 rightHash_,
+            address binder_,
+            uint256 registeredAtBlock_,
+            uint8 resolutionOutcome_,
+            bool resolved_,
+            uint256 strikeCountLeft_,
+            uint256 strikeCountRight_,
+            uint256 bountyWei_,
+            bool bountyClaimed_
+        )
+    {
+        TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0) revert DB_PairNotFound();
+        leftHash_ = p.leftHash;
+        rightHash_ = p.rightHash;
+        binder_ = p.binder;
+        registeredAtBlock_ = p.registeredAtBlock;
+        resolutionOutcome_ = p.resolutionOutcome;
+        resolved_ = p.resolved;
+        strikeCountLeft_ = p.strikeCountLeft;
+        strikeCountRight_ = p.strikeCountRight;
+        bountyWei_ = p.bountyWei;
+        bountyClaimed_ = p.bountyClaimed;
+    }
+
+    function getStripeDetails(bytes32 stripeId)
+        external
+        view
+        returns (
+            bytes32 anchorHash_,
+            address owner_,
+            uint256 createdAtBlock_,
