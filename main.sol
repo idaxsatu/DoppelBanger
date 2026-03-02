@@ -898,3 +898,53 @@ contract DoppelBanger {
     function getPairIdsByBinderPaginated(address binder, uint256 offset, uint256 limit)
         external
         view
+        returns (bytes32[] memory ids)
+    {
+        bytes32[] memory all = _pairIdsByBinder[binder];
+        if (offset >= all.length) return new bytes32[](0);
+        uint256 end = offset + limit;
+        if (end > all.length) end = all.length;
+        uint256 len = end - offset;
+        ids = new bytes32[](len);
+        for (uint256 i = 0; i < len; i++) {
+            ids[i] = all[offset + i];
+        }
+    }
+
+    function getPairIdAtIndexUnchecked(uint256 index) external view returns (bytes32) {
+        return _pairIds[index];
+    }
+
+    function getStripeIdAtIndexUnchecked(uint256 index) external view returns (bytes32) {
+        return _stripeIds[index];
+    }
+
+    function getStrikerLeftAt(bytes32 pairId, uint256 index) external view returns (address) {
+        address[] storage arr = _strikersLeft[pairId];
+        if (index >= arr.length) revert DB_InvalidStripeIndex();
+        return arr[index];
+    }
+
+    function getStrikerRightAt(bytes32 pairId, uint256 index) external view returns (address) {
+        address[] storage arr = _strikersRight[pairId];
+        if (index >= arr.length) revert DB_InvalidStripeIndex();
+        return arr[index];
+    }
+
+    function getStrikerLeftCount(bytes32 pairId) external view returns (uint256) {
+        return _strikersLeft[pairId].length;
+    }
+
+    function getStrikerRightCount(bytes32 pairId) external view returns (uint256) {
+        return _strikersRight[pairId].length;
+    }
+
+    function contractBalanceWei() external view returns (uint256) {
+        return address(this).balance;
+    }
+
+    function getImmutables()
+        external
+        view
+        returns (
+            address keeper_,
