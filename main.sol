@@ -598,3 +598,53 @@ contract DoppelBanger {
             rightHashes[i] = p.rightHash;
             binders[i] = p.binder;
             resolvedFlags[i] = p.resolved;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // BULK VIEW: STRIPES IN RANGE
+    // -------------------------------------------------------------------------
+
+    function getStripesInRange(uint256 fromIndex, uint256 toIndex)
+        external
+        view
+        returns (
+            bytes32[] memory stripeIds,
+            bytes32[] memory anchorHashes,
+            address[] memory owners,
+            bool[] memory linkedFlags
+        )
+    {
+        if (fromIndex > toIndex || toIndex >= _stripeIds.length) revert DB_InvalidStripeIndex();
+        uint256 len = toIndex - fromIndex + 1;
+        stripeIds = new bytes32[](len);
+        anchorHashes = new bytes32[](len);
+        owners = new address[](len);
+        linkedFlags = new bool[](len);
+
+        for (uint256 i = 0; i < len; i++) {
+            bytes32 id = _stripeIds[fromIndex + i];
+            Stripe storage s = _stripes[id];
+            stripeIds[i] = id;
+            anchorHashes[i] = s.anchorHash;
+            owners[i] = s.owner;
+            linkedFlags[i] = s.linked;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // STATS
+    // -------------------------------------------------------------------------
+
+    function getGlobalStats()
+        external
+        view
+        returns (
+            uint256 totalPairs,
+            uint256 totalStripes,
+            uint256 deployBlockNum,
+            uint256 currentFeeBps,
+            uint256 currentMaxPairsPerBinder
+        )
+    {
+        return (
