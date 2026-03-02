@@ -298,3 +298,53 @@ contract DoppelBanger {
         if (s.createdAtBlock == 0) revert DB_StripeNotFound();
         if (msg.sender != s.owner) revert DB_NotStripeOwner();
         if (s.linked) revert DB_StripeAlreadyLinked();
+        if (_pairs[pairId].registeredAtBlock == 0) revert DB_PairNotFound();
+
+        s.linkedPairId = pairId;
+        s.linked = true;
+
+        emit StripeLinked(stripeId, pairId, block.number);
+    }
+
+    // -------------------------------------------------------------------------
+    // BATCH REGISTER
+    // -------------------------------------------------------------------------
+
+    function batchRegisterTwins(
+        bytes32[] calldata pairIds,
+        bytes32[] calldata leftHashes,
+        bytes32[] calldata rightHashes
+    ) external nonReentrant whenNotFrozen(DB_NAMESPACE) returns (uint256 registered) {
+        if (pairIds.length != leftHashes.length || leftHashes.length != rightHashes.length) revert DB_InvalidBatchLength();
+        if (pairIds.length > DB_MAX_BATCH) revert DB_InvalidBatchLength();
+        if (pairCount + pairIds.length > DB_MAX_PAIRS) revert DB_MaxPairsReached();
+        if (_pairCountByBinder[msg.sender] + pairIds.length > maxPairsPerBinder) revert DB_MaxPairsPerBinderReached();
+
+        for (uint256 i = 0; i < pairIds.length; i++) {
+            if (pairIds[i] == bytes32(0) || leftHashes[i] == bytes32(0) || rightHashes[i] == bytes32(0)) continue;
+            if (_pairs[pairIds[i]].registeredAtBlock != 0) continue;
+
+            _pairs[pairIds[i]] = TwinPair({
+                leftHash: leftHashes[i],
+                rightHash: rightHashes[i],
+                binder: msg.sender,
+                registeredAtBlock: block.number,
+                resolutionOutcome: 0,
+                resolved: false,
+                strikeCountLeft: 0,
+                strikeCountRight: 0,
+                bountyWei: 0,
+                bountyClaimed: false
+            });
+            _pairIds.push(pairIds[i]);
+            pairCount++;
+            _pairIdsByBinder[msg.sender].push(pairIds[i]);
+            _pairCountByBinder[msg.sender]++;
+            registered++;
+            emit TwinRegistered(pairIds[i], leftHashes[i], rightHashes[i], msg.sender, block.number);
+        }
+        if (registered > 0) emit BatchTwinsRegistered(registered, msg.sender, block.number);
+        return registered;
+    }
+
+    // -------------------------------------------------------------------------
