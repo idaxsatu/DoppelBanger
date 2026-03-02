@@ -198,3 +198,53 @@ contract DoppelBanger {
             registeredAtBlock: block.number,
             resolutionOutcome: 0,
             resolved: false,
+            strikeCountLeft: 0,
+            strikeCountRight: 0,
+            bountyWei: 0,
+            bountyClaimed: false
+        });
+        _pairIds.push(pairId);
+        pairCount++;
+        _pairIdsByBinder[msg.sender].push(pairId);
+        _pairCountByBinder[msg.sender]++;
+
+        emit TwinRegistered(pairId, leftHash, rightHash, msg.sender, block.number);
+        return true;
+    }
+
+    function strikeMirror(bytes32 pairId, uint8 side, bytes32 reasonHash) external nonReentrant {
+        TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0) revert DB_PairNotFound();
+        if (p.resolved) revert DB_AlreadyResolved();
+        if (side >= DB_SIDES) revert DB_InvalidSide();
+        if (_struckBy[pairId][side][msg.sender]) revert DB_AlreadyStruck();
+
+        _struckBy[pairId][side][msg.sender] = true;
+        if (side == 0) {
+            p.strikeCountLeft++;
+            _strikersLeft[pairId].push(msg.sender);
+        } else {
+            p.strikeCountRight++;
+            _strikersRight[pairId].push(msg.sender);
+        }
+
+        emit MirrorStruck(pairId, side, msg.sender, reasonHash, block.number);
+    }
+
+    function resolvePair(bytes32 pairId, uint8 outcome) external onlyArbiter nonReentrant {
+        TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0) revert DB_PairNotFound();
+        if (p.resolved) revert DB_AlreadyResolved();
+        if (outcome > DB_OUTCOME_TIE) revert DB_InvalidOutcome();
+
+        p.resolved = true;
+        p.resolutionOutcome = outcome;
+
+        emit PairResolved(pairId, outcome, msg.sender, block.number);
+    }
+
+    function postBounty(bytes32 pairId) external payable nonReentrant {
+        TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0) revert DB_PairNotFound();
+        if (p.resolved) revert DB_AlreadyResolved();
+        if (msg.value == 0) revert DB_ZeroAmount();
