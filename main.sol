@@ -448,3 +448,53 @@ contract DoppelBanger {
 
     function getRightHash(bytes32 pairId) external view returns (bytes32) {
         TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0) revert DB_PairNotFound();
+        return p.rightHash;
+    }
+
+    function getBinder(bytes32 pairId) external view returns (address) {
+        TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0) revert DB_PairNotFound();
+        return p.binder;
+    }
+
+    function isResolved(bytes32 pairId) external view returns (bool) {
+        return _pairs[pairId].resolved;
+    }
+
+    function getResolutionOutcome(bytes32 pairId) external view returns (uint8) {
+        TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0) revert DB_PairNotFound();
+        return p.resolutionOutcome;
+    }
+
+    function pairExists(bytes32 pairId) external view returns (bool) {
+        return _pairs[pairId].registeredAtBlock != 0;
+    }
+
+    function getBountyWei(bytes32 pairId) external view returns (uint256) {
+        return _pairs[pairId].bountyWei;
+    }
+
+    function hasStruck(bytes32 pairId, uint8 side, address account) external view returns (bool) {
+        if (side >= DB_SIDES) revert DB_InvalidSide();
+        return _struckBy[pairId][side][account];
+    }
+
+    // -------------------------------------------------------------------------
+    // VIEW: LISTS
+    // -------------------------------------------------------------------------
+
+    function getPairIdAt(uint256 index) external view returns (bytes32) {
+        if (index >= _pairIds.length) revert DB_PairNotFound();
+        return _pairIds[index];
+    }
+
+    function getPairIdsByBinder(address binder) external view returns (bytes32[] memory) {
+        return _pairIdsByBinder[binder];
+    }
+
+    function getPairCountByBinder(address binder) external view returns (uint256) {
+        return _pairCountByBinder[binder];
+    }
+
