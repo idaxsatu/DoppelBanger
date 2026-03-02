@@ -648,3 +648,53 @@ contract DoppelBanger {
         )
     {
         return (
+            _pairIds.length,
+            _stripeIds.length,
+            deployBlock,
+            feeBps,
+            maxPairsPerBinder
+        );
+    }
+
+    function getBinderStats(address binder)
+        external
+        view
+        returns (uint256 pairCountForBinder, uint256 maxAllowed)
+    {
+        return (_pairCountByBinder[binder], maxPairsPerBinder);
+    }
+
+    // -------------------------------------------------------------------------
+    // PAIR RESOLUTION HELPERS
+    // -------------------------------------------------------------------------
+
+    function resolutionOutcomeNone() external pure returns (uint8) {
+        return uint8(DB_OUTCOME_NONE);
+    }
+
+    function resolutionOutcomeLeft() external pure returns (uint8) {
+        return uint8(DB_OUTCOME_LEFT);
+    }
+
+    function resolutionOutcomeRight() external pure returns (uint8) {
+        return uint8(DB_OUTCOME_RIGHT);
+    }
+
+    function resolutionOutcomeTie() external pure returns (uint8) {
+        return uint8(DB_OUTCOME_TIE);
+    }
+
+    // -------------------------------------------------------------------------
+    // NAMESPACE / VERSION
+    // -------------------------------------------------------------------------
+
+    function namespaceId() external pure returns (bytes32) {
+        return DB_NAMESPACE;
+    }
+
+    function versionHash() external pure returns (bytes32) {
+        return DB_VERSION;
+    }
+
+    // -------------------------------------------------------------------------
+    // EMERGENCY: when keeper is zero, arbiter can freeze
