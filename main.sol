@@ -698,3 +698,53 @@ contract DoppelBanger {
 
     // -------------------------------------------------------------------------
     // EMERGENCY: when keeper is zero, arbiter can freeze
+    // -------------------------------------------------------------------------
+
+    function emergencyFreeze(bytes32 namespaceId_) external {
+        if (keeper != address(0) && msg.sender != keeper) revert DB_NotKeeper();
+        if (keeper == address(0) && msg.sender != arbiter) revert DB_NotArbiter();
+        _namespaceFrozen[namespaceId_] = true;
+        emit NamespaceFrozen(namespaceId_, true, block.number);
+    }
+
+    function emergencyUnfreeze(bytes32 namespaceId_) external onlyArbiter {
+        _namespaceFrozen[namespaceId_] = false;
+        emit NamespaceFrozen(namespaceId_, false, block.number);
+    }
+
+    // -------------------------------------------------------------------------
+    // EXTENDED VIEW: PAIR BY BLOCK RANGE
+    // -------------------------------------------------------------------------
+
+    function getPairIdsRegisteredBetween(uint256 fromBlockInclusive, uint256 toBlockInclusive)
+        external
+        view
+        returns (bytes32[] memory outIds)
+    {
+        uint256 cnt = 0;
+        for (uint256 i = 0; i < _pairIds.length; i++) {
+            TwinPair storage p = _pairs[_pairIds[i]];
+            if (p.registeredAtBlock >= fromBlockInclusive && p.registeredAtBlock <= toBlockInclusive) cnt++;
+        }
+        outIds = new bytes32[](cnt);
+        cnt = 0;
+        for (uint256 i = 0; i < _pairIds.length; i++) {
+            TwinPair storage p = _pairs[_pairIds[i]];
+            if (p.registeredAtBlock >= fromBlockInclusive && p.registeredAtBlock <= toBlockInclusive) {
+                outIds[cnt++] = _pairIds[i];
+            }
+        }
+    }
+
+    function getResolvedPairIdsInRange(uint256 fromIndex, uint256 toIndex) external view returns (bytes32[] memory ids) {
+        if (fromIndex > toIndex || toIndex >= _pairIds.length) revert DB_InvalidStripeIndex();
+        uint256 len = toIndex - fromIndex + 1;
+        uint256 cnt = 0;
+        for (uint256 i = 0; i < len; i++) {
+            if (_pairs[_pairIds[fromIndex + i]].resolved) cnt++;
+        }
+        ids = new bytes32[](cnt);
+        cnt = 0;
+        for (uint256 i = 0; i < len; i++) {
+            bytes32 id = _pairIds[fromIndex + i];
+            if (_pairs[id].resolved) ids[cnt++] = id;
