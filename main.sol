@@ -548,3 +548,53 @@ contract DoppelBanger {
     function totalStripeCount() external view returns (uint256) {
         return _stripeIds.length;
     }
+
+    // -------------------------------------------------------------------------
+    // UTILITY: HASH HELPERS
+    // -------------------------------------------------------------------------
+
+    function hashTwinPayload(bytes calldata leftPayload, bytes calldata rightPayload) external pure returns (bytes32 leftHash, bytes32 rightHash) {
+        leftHash = keccak256(leftPayload);
+        rightHash = keccak256(rightPayload);
+    }
+
+    function hashTwinStrings(string calldata leftStr, string calldata rightStr) external pure returns (bytes32 leftHash, bytes32 rightHash) {
+        leftHash = keccak256(bytes(leftStr));
+        rightHash = keccak256(bytes(rightStr));
+    }
+
+    function derivePairId(bytes32 leftHash, bytes32 rightHash, address binder, uint256 salt) external pure returns (bytes32) {
+        return keccak256(abi.encodePacked(leftHash, rightHash, binder, salt));
+    }
+
+    // -------------------------------------------------------------------------
+    // BULK VIEW: PAIRS IN RANGE
+    // -------------------------------------------------------------------------
+
+    function getPairsInRange(uint256 fromIndex, uint256 toIndex)
+        external
+        view
+        returns (
+            bytes32[] memory pairIds,
+            bytes32[] memory leftHashes,
+            bytes32[] memory rightHashes,
+            address[] memory binders,
+            bool[] memory resolvedFlags
+        )
+    {
+        if (fromIndex > toIndex || toIndex >= _pairIds.length) revert DB_InvalidStripeIndex();
+        uint256 len = toIndex - fromIndex + 1;
+        pairIds = new bytes32[](len);
+        leftHashes = new bytes32[](len);
+        rightHashes = new bytes32[](len);
+        binders = new address[](len);
+        resolvedFlags = new bool[](len);
+
+        for (uint256 i = 0; i < len; i++) {
+            bytes32 id = _pairIds[fromIndex + i];
+            TwinPair storage p = _pairs[id];
+            pairIds[i] = id;
+            leftHashes[i] = p.leftHash;
+            rightHashes[i] = p.rightHash;
+            binders[i] = p.binder;
+            resolvedFlags[i] = p.resolved;
