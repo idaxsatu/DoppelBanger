@@ -498,3 +498,53 @@ contract DoppelBanger {
         return _pairCountByBinder[binder];
     }
 
+    function getAllPairIds() external view returns (bytes32[] memory) {
+        return _pairIds;
+    }
+
+    function getStrikersLeft(bytes32 pairId) external view returns (address[] memory) {
+        return _strikersLeft[pairId];
+    }
+
+    function getStrikersRight(bytes32 pairId) external view returns (address[] memory) {
+        return _strikersRight[pairId];
+    }
+
+    // -------------------------------------------------------------------------
+    // VIEW: STRIPES
+    // -------------------------------------------------------------------------
+
+    function getStripe(bytes32 stripeId)
+        external
+        view
+        returns (bytes32 anchorHash, address owner, uint256 createdAtBlock, bytes32 linkedPairId, bool linked)
+    {
+        Stripe storage s = _stripes[stripeId];
+        if (s.createdAtBlock == 0) revert DB_StripeNotFound();
+        return (s.anchorHash, s.owner, s.createdAtBlock, s.linkedPairId, s.linked);
+    }
+
+    function getStripeIdAt(uint256 index) external view returns (bytes32) {
+        if (index >= _stripeIds.length) revert DB_StripeNotFound();
+        return _stripeIds[index];
+    }
+
+    function stripeExists(bytes32 stripeId) external view returns (bool) {
+        return _stripes[stripeId].createdAtBlock != 0;
+    }
+
+    // -------------------------------------------------------------------------
+    // VIEW: CONFIG
+    // -------------------------------------------------------------------------
+
+    function isNamespaceFrozen(bytes32 namespaceId) external view returns (bool) {
+        return _namespaceFrozen[namespaceId];
+    }
+
+    function totalPairCount() external view returns (uint256) {
+        return _pairIds.length;
+    }
+
+    function totalStripeCount() external view returns (uint256) {
+        return _stripeIds.length;
+    }
