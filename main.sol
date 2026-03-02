@@ -398,3 +398,53 @@ contract DoppelBanger {
 
     function issueRefund(address to, uint256 amountWei, bytes32 reasonHash) external onlyArbiter nonReentrant {
         if (to == address(0)) revert DB_ZeroAddress();
+        if (amountWei == 0) revert DB_ZeroAmount();
+        (bool ok,) = to.call{value: amountWei}("");
+        if (!ok) revert DB_TransferFailed();
+        emit RefundIssued(to, amountWei, reasonHash, block.number);
+    }
+
+    // -------------------------------------------------------------------------
+    // VIEW: PAIR BY ID
+    // -------------------------------------------------------------------------
+
+    function getPair(bytes32 pairId)
+        external
+        view
+        returns (
+            bytes32 leftHash,
+            bytes32 rightHash,
+            address binder,
+            uint256 registeredAtBlock,
+            uint8 resolutionOutcome,
+            bool resolved,
+            uint256 strikeCountLeft,
+            uint256 strikeCountRight,
+            uint256 bountyWei,
+            bool bountyClaimed
+        )
+    {
+        TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0) revert DB_PairNotFound();
+        return (
+            p.leftHash,
+            p.rightHash,
+            p.binder,
+            p.registeredAtBlock,
+            p.resolutionOutcome,
+            p.resolved,
+            p.strikeCountLeft,
+            p.strikeCountRight,
+            p.bountyWei,
+            p.bountyClaimed
+        );
+    }
+
+    function getLeftHash(bytes32 pairId) external view returns (bytes32) {
+        TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0) revert DB_PairNotFound();
+        return p.leftHash;
+    }
+
+    function getRightHash(bytes32 pairId) external view returns (bytes32) {
+        TwinPair storage p = _pairs[pairId];
