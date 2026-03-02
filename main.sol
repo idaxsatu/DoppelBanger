@@ -748,3 +748,53 @@ contract DoppelBanger {
         for (uint256 i = 0; i < len; i++) {
             bytes32 id = _pairIds[fromIndex + i];
             if (_pairs[id].resolved) ids[cnt++] = id;
+        }
+    }
+
+    function getUnresolvedPairIdsInRange(uint256 fromIndex, uint256 toIndex) external view returns (bytes32[] memory ids) {
+        if (fromIndex > toIndex || toIndex >= _pairIds.length) revert DB_InvalidStripeIndex();
+        uint256 len = toIndex - fromIndex + 1;
+        uint256 cnt = 0;
+        for (uint256 i = 0; i < len; i++) {
+            if (!_pairs[_pairIds[fromIndex + i]].resolved) cnt++;
+        }
+        ids = new bytes32[](cnt);
+        cnt = 0;
+        for (uint256 i = 0; i < len; i++) {
+            bytes32 id = _pairIds[fromIndex + i];
+            if (!_pairs[id].resolved) ids[cnt++] = id;
+        }
+    }
+
+    function getPairIdsWithBountyInRange(uint256 fromIndex, uint256 toIndex) external view returns (bytes32[] memory ids) {
+        if (fromIndex > toIndex || toIndex >= _pairIds.length) revert DB_InvalidStripeIndex();
+        uint256 len = toIndex - fromIndex + 1;
+        uint256 cnt = 0;
+        for (uint256 i = 0; i < len; i++) {
+            if (_pairs[_pairIds[fromIndex + i]].bountyWei > 0) cnt++;
+        }
+        ids = new bytes32[](cnt);
+        cnt = 0;
+        for (uint256 i = 0; i < len; i++) {
+            bytes32 id = _pairIds[fromIndex + i];
+            if (_pairs[id].bountyWei > 0) ids[cnt++] = id;
+        }
+    }
+
+    function countResolvedPairs() external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _pairIds.length; i++) {
+            if (_pairs[_pairIds[i]].resolved) c++;
+        }
+        return c;
+    }
+
+    function countUnresolvedPairs() external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _pairIds.length; i++) {
+            if (!_pairs[_pairIds[i]].resolved) c++;
+        }
+        return c;
+    }
+
+    function countPairsWithBounty() external view returns (uint256) {
