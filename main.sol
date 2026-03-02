@@ -248,3 +248,53 @@ contract DoppelBanger {
         if (p.registeredAtBlock == 0) revert DB_PairNotFound();
         if (p.resolved) revert DB_AlreadyResolved();
         if (msg.value == 0) revert DB_ZeroAmount();
+
+        p.bountyWei += msg.value;
+
+        emit BountyPosted(pairId, msg.value, msg.sender, block.number);
+    }
+
+    function claimBounty(bytes32 pairId) external nonReentrant {
+        TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0) revert DB_PairNotFound();
+        if (!p.resolved) revert DB_NotResolved();
+        if (p.bountyClaimed) revert DB_InsufficientBounty();
+        if (p.bountyWei == 0) revert DB_ZeroAmount();
+        if (msg.sender != arbiter && msg.sender != p.binder) revert DB_NotBinder();
+
+        p.bountyClaimed = true;
+        uint256 amount = p.bountyWei;
+        (bool ok,) = msg.sender.call{value: amount}("");
+        if (!ok) revert DB_TransferFailed();
+
+        emit BountyClaimed(pairId, msg.sender, amount, block.number);
+    }
+
+    // -------------------------------------------------------------------------
+    // STRIPES
+    // -------------------------------------------------------------------------
+
+    function addStripe(bytes32 stripeId, bytes32 anchorHash) external nonReentrant whenNotFrozen(DB_NAMESPACE) {
+        if (stripeId == bytes32(0)) revert DB_ZeroHash();
+        if (anchorHash == bytes32(0)) revert DB_ZeroHash();
+        if (_stripes[stripeId].createdAtBlock != 0) revert DB_DuplicatePair();
+        if (stripeCount >= DB_MAX_STRIPES) revert DB_MaxStripesReached();
+
+        _stripes[stripeId] = Stripe({
+            anchorHash: anchorHash,
+            owner: msg.sender,
+            createdAtBlock: block.number,
+            linkedPairId: bytes32(0),
+            linked: false
+        });
+        _stripeIds.push(stripeId);
+        stripeCount++;
+
+        emit StripeAdded(stripeId, anchorHash, msg.sender, block.number);
+    }
+
+    function linkStripeToPair(bytes32 stripeId, bytes32 pairId) external nonReentrant {
+        Stripe storage s = _stripes[stripeId];
+        if (s.createdAtBlock == 0) revert DB_StripeNotFound();
+        if (msg.sender != s.owner) revert DB_NotStripeOwner();
+        if (s.linked) revert DB_StripeAlreadyLinked();
