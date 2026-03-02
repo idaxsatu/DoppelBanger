@@ -148,3 +148,53 @@ contract DoppelBanger {
         if (arbiter == address(0)) revert DB_ZeroAddress();
         if (treasury == address(0)) revert DB_ZeroAddress();
     }
+
+    // -------------------------------------------------------------------------
+    // MODIFIERS
+    // -------------------------------------------------------------------------
+
+    modifier onlyKeeper() {
+        if (msg.sender != keeper && keeper != address(0)) revert DB_NotKeeper();
+        _;
+    }
+
+    modifier onlyArbiter() {
+        if (msg.sender != arbiter) revert DB_NotArbiter();
+        _;
+    }
+
+    modifier whenNotFrozen(bytes32 namespaceId) {
+        if (_namespaceFrozen[namespaceId]) revert DB_NamespaceFrozen();
+        _;
+    }
+
+    modifier nonReentrant() {
+        if (_reentrancyLock != 0) revert DB_ReentrantCall();
+        _reentrancyLock = 1;
+        _;
+        _reentrancyLock = 0;
+    }
+
+    // -------------------------------------------------------------------------
+    // CORE: REGISTER TWIN PAIR
+    // -------------------------------------------------------------------------
+
+    function registerTwin(bytes32 pairId, bytes32 leftHash, bytes32 rightHash)
+        external
+        nonReentrant
+        whenNotFrozen(DB_NAMESPACE)
+        returns (bool)
+    {
+        if (pairId == bytes32(0)) revert DB_ZeroPair();
+        if (leftHash == bytes32(0) || rightHash == bytes32(0)) revert DB_ZeroHash();
+        if (_pairs[pairId].registeredAtBlock != 0) revert DB_DuplicatePair();
+        if (pairCount >= DB_MAX_PAIRS) revert DB_MaxPairsReached();
+        if (_pairCountByBinder[msg.sender] >= maxPairsPerBinder) revert DB_MaxPairsPerBinderReached();
+
+        _pairs[pairId] = TwinPair({
+            leftHash: leftHash,
+            rightHash: rightHash,
+            binder: msg.sender,
+            registeredAtBlock: block.number,
+            resolutionOutcome: 0,
+            resolved: false,
