@@ -1298,3 +1298,53 @@ contract DoppelBanger {
         uint256 seen = 0;
         for (uint256 i = 0; i < n; i++) {
             address b = _pairs[_pairIds[i]].binder;
+            bool found = false;
+            for (uint256 j = 0; j < seen; j++) {
+                if (temp[j] == b) { found = true; break; }
+            }
+            if (!found) temp[seen++] = b;
+        }
+        binders = new address[](seen);
+        for (uint256 i = 0; i < seen; i++) binders[i] = temp[i];
+    }
+
+    function getStripeOwnerAddresses() external view returns (address[] memory owners) {
+        uint256 n = _stripeIds.length;
+        address[] memory temp = new address[](n);
+        uint256 seen = 0;
+        for (uint256 i = 0; i < n; i++) {
+            address o = _stripes[_stripeIds[i]].owner;
+            bool found = false;
+            for (uint256 j = 0; j < seen; j++) {
+                if (temp[j] == o) { found = true; break; }
+            }
+            if (!found) temp[seen++] = o;
+        }
+        owners = new address[](seen);
+        for (uint256 i = 0; i < seen; i++) owners[i] = temp[i];
+    }
+
+    function getPairSummary(bytes32 pairId)
+        external
+        view
+        returns (
+            bool exists,
+            bool resolved_,
+            uint256 strikeLeft,
+            uint256 strikeRight,
+            uint256 bounty
+        )
+    {
+        TwinPair storage p = _pairs[pairId];
+        exists = p.registeredAtBlock != 0;
+        if (!exists) return (false, false, 0, 0, 0);
+        return (true, p.resolved, p.strikeCountLeft, p.strikeCountRight, p.bountyWei);
+    }
+
+    function getStripeSummary(bytes32 stripeId)
+        external
+        view
+        returns (bool exists, bool linked_, address owner_)
+    {
+        Stripe storage s = _stripes[stripeId];
+        exists = s.createdAtBlock != 0;
