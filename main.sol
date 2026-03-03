@@ -1098,3 +1098,53 @@ contract DoppelBanger {
         }
     }
 
+    function getFirstNPairIds(uint256 n) external view returns (bytes32[] memory ids) {
+        if (n > _pairIds.length) n = _pairIds.length;
+        ids = new bytes32[](n);
+        for (uint256 i = 0; i < n; i++) {
+            ids[i] = _pairIds[i];
+        }
+    }
+
+    function getLastNPairIds(uint256 n) external view returns (bytes32[] memory ids) {
+        if (n > _pairIds.length) n = _pairIds.length;
+        ids = new bytes32[](n);
+        uint256 start = _pairIds.length - n;
+        for (uint256 i = 0; i < n; i++) {
+            ids[i] = _pairIds[start + i];
+        }
+    }
+
+    function getFirstNStripeIds(uint256 n) external view returns (bytes32[] memory ids) {
+        if (n > _stripeIds.length) n = _stripeIds.length;
+        ids = new bytes32[](n);
+        for (uint256 i = 0; i < n; i++) {
+            ids[i] = _stripeIds[i];
+        }
+    }
+
+    function getLastNStripeIds(uint256 n) external view returns (bytes32[] memory ids) {
+        if (n > _stripeIds.length) n = _stripeIds.length;
+        ids = new bytes32[](n);
+        uint256 start = _stripeIds.length - n;
+        for (uint256 i = 0; i < n; i++) {
+            ids[i] = _stripeIds[start + i];
+        }
+    }
+
+    function indexOfPairId(bytes32 pairId) external view returns (uint256 index, bool found) {
+        for (uint256 i = 0; i < _pairIds.length; i++) {
+            if (_pairIds[i] == pairId) return (i, true);
+        }
+        return (0, false);
+    }
+
+    function indexOfStripeId(bytes32 stripeId) external view returns (uint256 index, bool found) {
+        for (uint256 i = 0; i < _stripeIds.length; i++) {
+            if (_stripeIds[i] == stripeId) return (i, true);
+        }
+        return (0, false);
+    }
+
+    function pairRegisteredAtBlock(bytes32 pairId) external view returns (uint256) {
+        return _pairs[pairId].registeredAtBlock;
