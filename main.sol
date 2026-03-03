@@ -1148,3 +1148,53 @@ contract DoppelBanger {
 
     function pairRegisteredAtBlock(bytes32 pairId) external view returns (uint256) {
         return _pairs[pairId].registeredAtBlock;
+    }
+
+    function stripeCreatedAtBlock(bytes32 stripeId) external view returns (uint256) {
+        return _stripes[stripeId].createdAtBlock;
+    }
+
+    function isBinder(bytes32 pairId, address account) external view returns (bool) {
+        return _pairs[pairId].binder == account;
+    }
+
+    function isStripeOwner(bytes32 stripeId, address account) external view returns (bool) {
+        return _stripes[stripeId].owner == account;
+    }
+
+    function bountyClaimable(bytes32 pairId) external view returns (bool) {
+        TwinPair storage p = _pairs[pairId];
+        return p.registeredAtBlock != 0 && p.resolved && !p.bountyClaimed && p.bountyWei > 0;
+    }
+
+    function canStrike(bytes32 pairId, uint8 side, address account) external view returns (bool) {
+        if (side >= DB_SIDES) return false;
+        TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0 || p.resolved) return false;
+        return !_struckBy[pairId][side][account];
+    }
+
+    function canResolve(bytes32 pairId) external view returns (bool) {
+        TwinPair storage p = _pairs[pairId];
+        return p.registeredAtBlock != 0 && !p.resolved;
+    }
+
+    function canPostBounty(bytes32 pairId) external view returns (bool) {
+        TwinPair storage p = _pairs[pairId];
+        return p.registeredAtBlock != 0 && !p.resolved;
+    }
+
+    function getOutcomeConstants()
+        external
+        pure
+        returns (uint8 none, uint8 left, uint8 right, uint8 tie)
+    {
+        return (uint8(DB_OUTCOME_NONE), uint8(DB_OUTCOME_LEFT), uint8(DB_OUTCOME_RIGHT), uint8(DB_OUTCOME_TIE));
+    }
+
+    function getCapConstants()
+        external
+        pure
+        returns (
+            uint256 maxPairs,
+            uint256 maxPairsPerBinderCap,
