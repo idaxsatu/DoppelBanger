@@ -1048,3 +1048,53 @@ contract DoppelBanger {
     }
 
     function getPairsBatch(bytes32[] calldata pairIds)
+        external
+        view
+        returns (
+            bytes32[] memory leftHashes,
+            bytes32[] memory rightHashes,
+            address[] memory binders,
+            bool[] memory resolvedFlags,
+            uint256[] memory bountyWeis
+        )
+    {
+        uint256 n = pairIds.length;
+        leftHashes = new bytes32[](n);
+        rightHashes = new bytes32[](n);
+        binders = new address[](n);
+        resolvedFlags = new bool[](n);
+        bountyWeis = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            TwinPair storage p = _pairs[pairIds[i]];
+            leftHashes[i] = p.leftHash;
+            rightHashes[i] = p.rightHash;
+            binders[i] = p.binder;
+            resolvedFlags[i] = p.resolved;
+            bountyWeis[i] = p.bountyWei;
+        }
+    }
+
+    function getStripesBatch(bytes32[] calldata stripeIds)
+        external
+        view
+        returns (
+            bytes32[] memory anchorHashes,
+            address[] memory owners,
+            bool[] memory linkedFlags,
+            bytes32[] memory linkedPairIds
+        )
+    {
+        uint256 n = stripeIds.length;
+        anchorHashes = new bytes32[](n);
+        owners = new address[](n);
+        linkedFlags = new bool[](n);
+        linkedPairIds = new bytes32[](n);
+        for (uint256 i = 0; i < n; i++) {
+            Stripe storage s = _stripes[stripeIds[i]];
+            anchorHashes[i] = s.anchorHash;
+            owners[i] = s.owner;
+            linkedFlags[i] = s.linked;
+            linkedPairIds[i] = s.linkedPairId;
+        }
+    }
+
