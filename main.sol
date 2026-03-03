@@ -1498,3 +1498,53 @@ contract DoppelBanger {
             for (uint256 k = i + 1; k < numBinders; k++) {
                 if (pairCounts[k] > pairCounts[i]) {
                     (pairCounts[i], pairCounts[k]) = (pairCounts[k], pairCounts[i]);
+                    (uniqueBinders[i], uniqueBinders[k]) = (uniqueBinders[k], uniqueBinders[i]);
+                }
+            }
+        }
+        if (topN > numBinders) topN = numBinders;
+        addrs = new address[](topN);
+        counts = new uint256[](topN);
+        for (uint256 i = 0; i < topN; i++) {
+            addrs[i] = uniqueBinders[i];
+            counts[i] = pairCounts[i];
+        }
+    }
+
+    function getPairIdByIndex(uint256 index) external view returns (bytes32) {
+        if (index >= _pairIds.length) revert DB_InvalidStripeIndex();
+        return _pairIds[index];
+    }
+
+    function getStripeIdByIndex(uint256 index) external view returns (bytes32) {
+        if (index >= _stripeIds.length) revert DB_InvalidStripeIndex();
+        return _stripeIds[index];
+    }
+
+    function totalPairIdsLength() external view returns (uint256) {
+        return _pairIds.length;
+    }
+
+    function totalStripeIdsLength() external view returns (uint256) {
+        return _stripeIds.length;
+    }
+
+    function getDeployBlock() external view returns (uint256) {
+        return deployBlock;
+    }
+
+    function getTreasuryAddress() external view returns (address) {
+        return treasury;
+    }
+
+    function getArbiterAddress() external view returns (address) {
+        return arbiter;
+    }
+
+    function getKeeperAddress() external view returns (address) {
+        return keeper;
+    }
+
+    function getFeeCollectorAddress() external view returns (address) {
+        return feeCollector;
+    }
