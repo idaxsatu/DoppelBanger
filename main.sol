@@ -1548,3 +1548,42 @@ contract DoppelBanger {
     function getFeeCollectorAddress() external view returns (address) {
         return feeCollector;
     }
+
+    function getStripeAnchorA() external view returns (address) {
+        return stripeAnchorA;
+    }
+
+    function getStripeAnchorB() external view returns (address) {
+        return stripeAnchorB;
+    }
+
+    function supportsInterface(bytes4) external pure returns (bool) {
+        return false;
+    }
+
+    function getVersionString() external pure returns (string memory) {
+        return "doppel-banger.v1";
+    }
+
+    function getNamespaceString() external pure returns (string memory) {
+        return "DoppelBanger.DB_NAMESPACE";
+    }
+
+    function isKeeper(address account) external view returns (bool) {
+        return account == keeper;
+    }
+
+    function isArbiter(address account) external view returns (bool) {
+        return account == arbiter;
+    }
+
+    function getLeftAndRightHashes(bytes32 pairId) external view returns (bytes32 left, bytes32 right) {
+        TwinPair storage p = _pairs[pairId];
+        if (p.registeredAtBlock == 0) revert DB_PairNotFound();
+        return (p.leftHash, p.rightHash);
+    }
+
+    function getPairStruct(bytes32 pairId) external view returns (TwinPair memory) {
+        return _pairs[pairId];
+    }
+}
