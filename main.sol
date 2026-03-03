@@ -1348,3 +1348,53 @@ contract DoppelBanger {
     {
         Stripe storage s = _stripes[stripeId];
         exists = s.createdAtBlock != 0;
+        if (!exists) return (false, false, address(0));
+        return (true, s.linked, s.owner);
+    }
+
+    function getMultiplePairSummaries(bytes32[] calldata pairIds)
+        external
+        view
+        returns (
+            bool[] memory existFlags,
+            bool[] memory resolvedFlags,
+            uint256[] memory bountyWeis
+        )
+    {
+        uint256 n = pairIds.length;
+        existFlags = new bool[](n);
+        resolvedFlags = new bool[](n);
+        bountyWeis = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            TwinPair storage p = _pairs[pairIds[i]];
+            existFlags[i] = p.registeredAtBlock != 0;
+            resolvedFlags[i] = p.resolved;
+            bountyWeis[i] = p.bountyWei;
+        }
+    }
+
+    function getMultipleStripeSummaries(bytes32[] calldata stripeIds)
+        external
+        view
+        returns (bool[] memory existFlags, bool[] memory linkedFlags)
+    {
+        uint256 n = stripeIds.length;
+        existFlags = new bool[](n);
+        linkedFlags = new bool[](n);
+        for (uint256 i = 0; i < n; i++) {
+            Stripe storage s = _stripes[stripeIds[i]];
+            existFlags[i] = s.createdAtBlock != 0;
+            linkedFlags[i] = s.linked;
+        }
+    }
+
+    function computeFeeForBounty(uint256 bountyWei) external view returns (uint256 feeWei) {
+        return (bountyWei * feeBps) / 10_000;
+    }
+
+    function computeNetBounty(uint256 bountyWei) external view returns (uint256 netWei) {
+        uint256 fee = (bountyWei * feeBps) / 10_000;
+        return bountyWei - fee;
+    }
+
+    function getFeeBpsCap() external pure returns (uint256) {
