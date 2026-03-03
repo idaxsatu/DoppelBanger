@@ -998,3 +998,53 @@ contract DoppelBanger {
     function outcomeLabel(uint8 outcome) external pure returns (string memory) {
         if (outcome == DB_OUTCOME_NONE) return "none";
         if (outcome == DB_OUTCOME_LEFT) return "left";
+        if (outcome == DB_OUTCOME_RIGHT) return "right";
+        if (outcome == DB_OUTCOME_TIE) return "tie";
+        return "invalid";
+    }
+
+    function isValidOutcome(uint8 outcome) external pure returns (bool) {
+        return outcome <= DB_OUTCOME_TIE;
+    }
+
+    function compareHashes(bytes32 a, bytes32 b) external pure returns (bool equal) {
+        return a == b;
+    }
+
+    function pairIdFromHashes(bytes32 leftHash, bytes32 rightHash) external pure returns (bytes32) {
+        return keccak256(abi.encodePacked(leftHash, rightHash));
+    }
+
+    function pairIdFromHashesAndBinder(bytes32 leftHash, bytes32 rightHash, address binder) external pure returns (bytes32) {
+        return keccak256(abi.encodePacked(leftHash, rightHash, binder));
+    }
+
+    function pairIdFromHashesBinderSalt(bytes32 leftHash, bytes32 rightHash, address binder, uint256 salt) external pure returns (bytes32) {
+        return keccak256(abi.encodePacked(leftHash, rightHash, binder, salt));
+    }
+
+    function stripeIdFromAnchor(bytes32 anchorHash) external pure returns (bytes32) {
+        return keccak256(abi.encodePacked(anchorHash));
+    }
+
+    function stripeIdFromAnchorAndOwner(bytes32 anchorHash, address owner) external pure returns (bytes32) {
+        return keccak256(abi.encodePacked(anchorHash, owner));
+    }
+
+    function combineHashes(bytes32 leftHash, bytes32 rightHash) external pure returns (bytes32) {
+        return keccak256(abi.encodePacked(leftHash, rightHash));
+    }
+
+    function hashSingle(bytes calldata payload) external pure returns (bytes32) {
+        return keccak256(payload);
+    }
+
+    function hashString(string calldata s) external pure returns (bytes32) {
+        return keccak256(bytes(s));
+    }
+
+    function hashBytes32(bytes32 a) external pure returns (bytes32) {
+        return keccak256(abi.encodePacked(a));
+    }
+
+    function getPairsBatch(bytes32[] calldata pairIds)
