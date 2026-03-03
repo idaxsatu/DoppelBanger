@@ -1398,3 +1398,53 @@ contract DoppelBanger {
     }
 
     function getFeeBpsCap() external pure returns (uint256) {
+        return DB_FEE_BPS_CAP;
+    }
+
+    function getMaxBatchSize() external pure returns (uint256) {
+        return DB_MAX_BATCH;
+    }
+
+    function getMaxStripes() external pure returns (uint256) {
+        return DB_MAX_STRIPES;
+    }
+
+    function getMaxPairsGlobal() external pure returns (uint256) {
+        return DB_MAX_PAIRS;
+    }
+
+    function getMaxPairsPerBinderCap() external pure returns (uint256) {
+        return DB_MAX_PAIRS_PER_BINDER;
+    }
+
+    function getSidesCount() external pure returns (uint8) {
+        return uint8(DB_SIDES);
+    }
+
+    function checkPairIntegrity(bytes32 pairId)
+        external
+        view
+        returns (
+            bool exists,
+            bool hasLeftHash,
+            bool hasRightHash,
+            bool hasBinder,
+            bool notResolvedOrHasOutcome
+        )
+    {
+        TwinPair storage p = _pairs[pairId];
+        exists = p.registeredAtBlock != 0;
+        if (!exists) return (false, false, false, false, false);
+        hasLeftHash = p.leftHash != bytes32(0);
+        hasRightHash = p.rightHash != bytes32(0);
+        hasBinder = p.binder != address(0);
+        notResolvedOrHasOutcome = !p.resolved || p.resolutionOutcome <= DB_OUTCOME_TIE;
+        return (exists, hasLeftHash, hasRightHash, hasBinder, notResolvedOrHasOutcome);
+    }
+
+    function checkStripeIntegrity(bytes32 stripeId)
+        external
+        view
+        returns (bool exists, bool hasAnchorHash, bool hasOwner)
+    {
+        Stripe storage s = _stripes[stripeId];
