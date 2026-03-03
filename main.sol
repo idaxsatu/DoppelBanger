@@ -948,3 +948,53 @@ contract DoppelBanger {
         view
         returns (
             address keeper_,
+            address arbiter_,
+            address treasury_,
+            address stripeAnchorA_,
+            address stripeAnchorB_,
+            address feeCollector_,
+            uint256 deployBlock_
+        )
+    {
+        return (keeper, arbiter, treasury, stripeAnchorA, stripeAnchorB, feeCollector, deployBlock);
+    }
+
+    function getConfig()
+        external
+        view
+        returns (uint256 maxPairsPerBinder_, uint256 feeBps_, bool namespaceFrozen)
+    {
+        return (maxPairsPerBinder, feeBps, _namespaceFrozen[DB_NAMESPACE]);
+    }
+
+    function canRegisterMore(address account) external view returns (bool) {
+        return _pairCountByBinder[account] < maxPairsPerBinder && pairCount < DB_MAX_PAIRS && !_namespaceFrozen[DB_NAMESPACE];
+    }
+
+    function remainingSlotsForBinder(address account) external view returns (uint256) {
+        uint256 max = maxPairsPerBinder;
+        uint256 used = _pairCountByBinder[account];
+        if (used >= max) return 0;
+        return max - used;
+    }
+
+    function remainingGlobalPairSlots() external view returns (uint256) {
+        if (pairCount >= DB_MAX_PAIRS) return 0;
+        return DB_MAX_PAIRS - pairCount;
+    }
+
+    function isLeftSide(uint8 side) external pure returns (bool) {
+        return side == 0;
+    }
+
+    function isRightSide(uint8 side) external pure returns (bool) {
+        return side == 1;
+    }
+
+    function sideFromBool(bool leftElseRight) external pure returns (uint8) {
+        return leftElseRight ? 0 : 1;
+    }
+
+    function outcomeLabel(uint8 outcome) external pure returns (string memory) {
+        if (outcome == DB_OUTCOME_NONE) return "none";
+        if (outcome == DB_OUTCOME_LEFT) return "left";
