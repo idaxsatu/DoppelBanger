@@ -1448,3 +1448,53 @@ contract DoppelBanger {
         returns (bool exists, bool hasAnchorHash, bool hasOwner)
     {
         Stripe storage s = _stripes[stripeId];
+        exists = s.createdAtBlock != 0;
+        if (!exists) return (false, false, false);
+        hasAnchorHash = s.anchorHash != bytes32(0);
+        hasOwner = s.owner != address(0);
+        return (exists, hasAnchorHash, hasOwner);
+    }
+
+    function blocksSinceDeploy() external view returns (uint256) {
+        return block.number - deployBlock;
+    }
+
+    function blocksSincePairRegistered(bytes32 pairId) external view returns (uint256) {
+        uint256 reg = _pairs[pairId].registeredAtBlock;
+        if (reg == 0) revert DB_PairNotFound();
+        return block.number - reg;
+    }
+
+    function blocksSinceStripeCreated(bytes32 stripeId) external view returns (uint256) {
+        uint256 created = _stripes[stripeId].createdAtBlock;
+        if (created == 0) revert DB_StripeNotFound();
+        return block.number - created;
+    }
+
+    function getTopBindersByPairCount(uint256 topN) external view returns (address[] memory addrs, uint256[] memory counts) {
+        uint256 n = _pairIds.length;
+        if (n == 0) {
+            return (new address[](0), new uint256[](0));
+        }
+        address[] memory uniqueBinders = new address[](n);
+        uint256[] memory pairCounts = new uint256[](n);
+        uint256 numBinders = 0;
+        for (uint256 i = 0; i < n; i++) {
+            address b = _pairs[_pairIds[i]].binder;
+            uint256 j = 0;
+            for (; j < numBinders; j++) {
+                if (uniqueBinders[j] == b) {
+                    pairCounts[j]++;
+                    break;
+                }
+            }
+            if (j == numBinders) {
+                uniqueBinders[numBinders] = b;
+                pairCounts[numBinders] = 1;
+                numBinders++;
+            }
+        }
+        for (uint256 i = 0; i < numBinders - 1; i++) {
+            for (uint256 k = i + 1; k < numBinders; k++) {
+                if (pairCounts[k] > pairCounts[i]) {
+                    (pairCounts[i], pairCounts[k]) = (pairCounts[k], pairCounts[i]);
