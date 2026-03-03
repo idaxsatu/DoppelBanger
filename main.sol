@@ -1248,3 +1248,53 @@ contract DoppelBanger {
         for (uint256 i = 0; i < _pairIds.length; i++) {
             bytes32 id = _pairIds[i];
             TwinPair storage p = _pairs[id];
+            if (p.strikeCountLeft >= minStrikesLeft && p.strikeCountRight >= minStrikesRight) ids[cnt++] = id;
+        }
+    }
+
+    function getUnlinkedStripeIds() external view returns (bytes32[] memory ids) {
+        uint256 cnt = 0;
+        for (uint256 i = 0; i < _stripeIds.length; i++) {
+            if (!_stripes[_stripeIds[i]].linked) cnt++;
+        }
+        ids = new bytes32[](cnt);
+        cnt = 0;
+        for (uint256 i = 0; i < _stripeIds.length; i++) {
+            bytes32 sid = _stripeIds[i];
+            if (!_stripes[sid].linked) ids[cnt++] = sid;
+        }
+    }
+
+    function getLinkedStripeIds() external view returns (bytes32[] memory ids) {
+        uint256 cnt = 0;
+        for (uint256 i = 0; i < _stripeIds.length; i++) {
+            if (_stripes[_stripeIds[i]].linked) cnt++;
+        }
+        ids = new bytes32[](cnt);
+        cnt = 0;
+        for (uint256 i = 0; i < _stripeIds.length; i++) {
+            bytes32 sid = _stripeIds[i];
+            if (_stripes[sid].linked) ids[cnt++] = sid;
+        }
+    }
+
+    function getPairIdsByBinderAndResolved(address binder, bool resolvedOnly) external view returns (bytes32[] memory ids) {
+        bytes32[] memory all = _pairIdsByBinder[binder];
+        uint256 cnt = 0;
+        for (uint256 i = 0; i < all.length; i++) {
+            if (!resolvedOnly || _pairs[all[i]].resolved) cnt++;
+        }
+        ids = new bytes32[](cnt);
+        cnt = 0;
+        for (uint256 i = 0; i < all.length; i++) {
+            bytes32 id = all[i];
+            if (!resolvedOnly || _pairs[id].resolved) ids[cnt++] = id;
+        }
+    }
+
+    function getBinderAddresses() external view returns (address[] memory binders) {
+        uint256 n = _pairIds.length;
+        address[] memory temp = new address[](n);
+        uint256 seen = 0;
+        for (uint256 i = 0; i < n; i++) {
+            address b = _pairs[_pairIds[i]].binder;
