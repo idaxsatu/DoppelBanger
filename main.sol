@@ -1198,3 +1198,53 @@ contract DoppelBanger {
         returns (
             uint256 maxPairs,
             uint256 maxPairsPerBinderCap,
+            uint256 maxBatch,
+            uint256 maxStripes,
+            uint256 feeBpsCap,
+            uint256 sides
+        )
+    {
+        return (DB_MAX_PAIRS, DB_MAX_PAIRS_PER_BINDER, DB_MAX_BATCH, DB_MAX_STRIPES, DB_FEE_BPS_CAP, DB_SIDES);
+    }
+
+    // -------------------------------------------------------------------------
+    // EXTENDED QUERIES: RESOLUTION OUTCOME FILTERS
+    // -------------------------------------------------------------------------
+
+    function getPairIdsByOutcome(uint8 outcome) external view returns (bytes32[] memory ids) {
+        uint256 cnt = 0;
+        for (uint256 i = 0; i < _pairIds.length; i++) {
+            if (_pairs[_pairIds[i]].resolved && _pairs[_pairIds[i]].resolutionOutcome == outcome) cnt++;
+        }
+        ids = new bytes32[](cnt);
+        cnt = 0;
+        for (uint256 i = 0; i < _pairIds.length; i++) {
+            bytes32 id = _pairIds[i];
+            if (_pairs[id].resolved && _pairs[id].resolutionOutcome == outcome) ids[cnt++] = id;
+        }
+    }
+
+    function countPairsByOutcome(uint8 outcome) external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _pairIds.length; i++) {
+            TwinPair storage p = _pairs[_pairIds[i]];
+            if (p.resolved && p.resolutionOutcome == outcome) c++;
+        }
+        return c;
+    }
+
+    function getPairIdsWithStrikesInRange(uint256 minStrikesLeft, uint256 minStrikesRight)
+        external
+        view
+        returns (bytes32[] memory ids)
+    {
+        uint256 cnt = 0;
+        for (uint256 i = 0; i < _pairIds.length; i++) {
+            TwinPair storage p = _pairs[_pairIds[i]];
+            if (p.strikeCountLeft >= minStrikesLeft && p.strikeCountRight >= minStrikesRight) cnt++;
+        }
+        ids = new bytes32[](cnt);
+        cnt = 0;
+        for (uint256 i = 0; i < _pairIds.length; i++) {
+            bytes32 id = _pairIds[i];
+            TwinPair storage p = _pairs[id];
